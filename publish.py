@@ -37,7 +37,9 @@ def call(method, path, **params):
         with urllib.request.urlopen(req, timeout=60) as r:
             return json.loads(r.read())
     except urllib.error.HTTPError as e:
-        raise SystemExit(f"API 오류 {e.code} {path}: {e.read().decode()}")
+        body = e.read().decode()
+        print(f"::error::API 오류 {e.code} ({path.split('/')[-1] or path}): {body[:400]}")
+        raise SystemExit(f"API 오류 {e.code} {path}: {body}")
 
 
 def user_id():
@@ -46,6 +48,7 @@ def user_id():
         return uid
     if api_base().startswith("https://graph.instagram.com"):
         return call("GET", "me", fields="user_id")["user_id"]
+    print("::error::Facebook 로그인 토큰(EAA...)은 IG_USER_ID 시크릿이 꼭 필요해요.")
     raise SystemExit("IG_USER_ID 시크릿이 필요해요.")
 
 
@@ -124,5 +127,16 @@ if __name__ == "__main__":
     elif cmd == "post":
         post(sys.argv[2])
     elif cmd == "check":
+        tok = os.environ.get("IG_TOKEN", "").strip()
+        has_uid = bool(os.environ.get("IG_USER_ID", "").strip())
+        kind = "Instagram 로그인(IG...)" if tok.startswith("IG") else ("Facebook 로그인(EAA...)" if tok.startswith("EAA") else "알 수 없음")
+        print(f"::notice::토큰 {'있음' if tok else '없음'} · 종류 {kind} · 길이 {len(tok)} · IG_USER_ID {'있음' if has_uid else '없음'}")
+        if not tok:
+            print("::error::IG_TOKEN 시크릿이 비어 있어요. Settings → Secrets and variables → Actions 에서 이름을 정확히 IG_TOKEN 으로 넣어주세요.")
+            sys.exit(1)
+        if tok != os.environ["IG_TOKEN"]:
+            print("::warning::토큰 앞뒤에 공백이나 줄바꿈이 있어요. 시크릿을 다시 붙여넣어 주세요.")
+            os.environ["IG_TOKEN"] = tok
         uid = user_id()
-        print("연결 확인:", call("GET", uid, fields="username").get("username"))
+        name = call("GET", uid, fields="username").get("username")
+        print(f"::notice::연결 확인 성공: @{name}")
