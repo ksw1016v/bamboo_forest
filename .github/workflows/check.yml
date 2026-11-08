@@ -3,6 +3,9 @@ name: check-connection
 # 토큰을 넣은 뒤 한 번 실행해서 인스타 계정이 연결됐는지 확인해요 (게시하지 않음)
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/check-trigger"
 
 jobs:
   check:
