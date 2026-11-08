@@ -48,8 +48,23 @@ def user_id():
         return uid
     if api_base().startswith("https://graph.instagram.com"):
         return call("GET", "me", fields="user_id")["user_id"]
-    # Facebook 로그인 토큰: 연결된 페이지들의 인스타 비즈니스 계정을 찾아본다
+    # Facebook 로그인 토큰: 토큰 주인(사용자 또는 페이지)과 연결된 인스타 비즈니스 계정을 찾아본다
+    me = call("GET", "me", fields="id,name")
+    print(f"::notice::토큰 주인: {me.get('name')} (id {me.get('id')})")
+    try:
+        perms = [p["permission"] for p in call("GET", "me/permissions").get("data", []) if p.get("status") == "granted"]
+        print("::notice::토큰 권한: " + ", ".join(perms))
+    except SystemExit:
+        pass  # 페이지 토큰은 permissions 조회가 안 될 수 있음
+    try:
+        own = call("GET", "me", fields="instagram_business_account{id,username}").get("instagram_business_account")
+    except SystemExit:
+        own = None
+    if own:
+        print(f"::notice::찾은 인스타 계정: @{own.get('username')} → IG_USER_ID = {own['id']}")
+        return own["id"]
     pages = call("GET", "me/accounts", fields="name,instagram_business_account{id,username}").get("data", [])
+    print(f"::notice::이 토큰으로 보이는 페이지: " + (", ".join(p.get("name", "") for p in pages) or "없음"))
     found = [(p["instagram_business_account"]["id"], p["instagram_business_account"].get("username", ""), p.get("name", ""))
              for p in pages if p.get("instagram_business_account")]
     for i, u, n in found:
