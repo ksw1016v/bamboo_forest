@@ -48,7 +48,18 @@ def user_id():
         return uid
     if api_base().startswith("https://graph.instagram.com"):
         return call("GET", "me", fields="user_id")["user_id"]
-    print("::error::Facebook 로그인 토큰(EAA...)은 IG_USER_ID 시크릿이 꼭 필요해요.")
+    # Facebook 로그인 토큰: 연결된 페이지들의 인스타 비즈니스 계정을 찾아본다
+    pages = call("GET", "me/accounts", fields="name,instagram_business_account{id,username}").get("data", [])
+    found = [(p["instagram_business_account"]["id"], p["instagram_business_account"].get("username", ""), p.get("name", ""))
+             for p in pages if p.get("instagram_business_account")]
+    for i, u, n in found:
+        print(f"::notice::찾은 인스타 계정: @{u} (페이지 {n}) → IG_USER_ID = {i}")
+    if len(found) == 1:
+        return found[0][0]
+    if not found:
+        print("::error::이 토큰으로 연결된 인스타 비즈니스 계정을 못 찾았어요. 인스타 계정이 Facebook 페이지에 연결돼 있는지, 토큰에 instagram_basic·pages_show_list 권한이 있는지 확인해 주세요.")
+    else:
+        print("::error::인스타 계정이 여러 개예요. 위 목록에서 대나무숲 계정의 번호를 IG_USER_ID 시크릿으로 넣어주세요.")
     raise SystemExit("IG_USER_ID 시크릿이 필요해요.")
 
 
