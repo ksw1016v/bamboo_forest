@@ -1,0 +1,38 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap"><link rel="stylesheet" href="assets/style.css"><link rel="icon" href="assets/bambu.jpg">
+<title>설계사를 위한 대나무숲</title>
+<meta name="description" content="말 못 한 마음, 밤부가 대신 외쳐드려요. 설계사를 위한 공감·소통·성장 커뮤니티 대나무숲.">
+<meta property="og:title" content="설계사를 위한 대나무숲"><meta property="og:description" content="말 못 한 마음, 밤부가 대신 외쳐드려요"><meta property="og:image" content="assets/bambu.jpg">
+</head><body><div class="wrap">
+<div class="hero">
+ <img src="assets/bambu.jpg" alt="확성기를 든 판다 캐릭터 밤부">
+ <div style="margin-top:16px"><span class="tag">공감 · 소통 · 성장 커뮤니티</span></div>
+ <h1>설계사를 위한<br>대나무숲</h1>
+ <p>말 못 한 마음, 밤부가 대신 외쳐드려요 🐼</p>
+</div>
+<div class="btns">
+ <a class="btn main" id="openchat" href="#">대나무숲 오픈채팅 참여하기<small>설계사끼리 편하게 털어놓는 곳</small></a>
+ <a class="btn" id="dm" href="#">인스타 DM으로 사연 보내기<small>이름·회사는 지우고 익명으로 소개해요</small></a>
+ <a class="btn" id="insta" href="#">인스타그램 팔로우하기</a>
+</div>
+<section><h2>대나무숲에서는 이런 이야기를 나눠요</h2><div class="cards">
+ <div class="card"><b>📢 오늘의 사연</b>DM으로 받은 사연, 밤부가 대신 외쳐요</div>
+ <div class="card"><b>🐼 설계사 공감</b>"이거 완전 내 얘기"인 순간들</div>
+ <div class="card"><b>🌱 밤부의 한마디</b>현장에서 바로 쓰는 작은 팁</div>
+ <div class="card"><b>🎋 대나무숲의 일상</b>오픈채팅과 오프라인 모임 이야기</div>
+ <div class="card"><b>☕ 쉼표</b>수고한 하루 끝, 잠깐 쉬어가요</div>
+</div></section>
+<section><div class="note">💌 <b>사연은 언제나 익명이에요.</b><br>보내주신 이야기는 이름, 회사, 지점처럼 누군지 알 수 있는 부분을 모두 지우고 다듬어서 소개해요. 게시 전에 각색한 내용을 먼저 보여드려요.</div></section>
+<footer>© 대나무숲 · 밤부<br><a href="privacy.html">개인정보처리방침</a><a href="terms.html">이용약관</a><a href="data-deletion.html">데이터 삭제 안내</a></footer>
+</div>
+<script>
+// 링크 설정: 아래 값만 바꾸면 버튼이 켜져요
+const LINKS = {
+  instagram: "",   // 예: "https://www.instagram.com/계정아이디/"
+  openchat: ""     // 예: "https://open.kakao.com/o/xxxxxxx"
+};
+function set(id, url, label){const a=document.getElementById(id); if(url){a.href=url;a.target="_blank";a.rel="noopener";} else {a.classList.add("off"); if(label) a.firstChild.textContent=label;}}
+set("openchat", LINKS.openchat, "대나무숲 오픈채팅 · 곧 열려요");
+set("dm", LINKS.instagram);
+set("insta", LINKS.instagram);
+</script>
+</body></html>

@@ -1,0 +1,64 @@
+name: daily-post
+
+on:
+  schedule:
+    # 목표 19:00 KST (=10:00 UTC). 예약 실행이 늦거나 빠질 수 있어 여러 번 시도, guard.py가 하루 1편만 허용
+    - cron: "47 9 * * *"
+    - cron: "7 10 * * *"
+    - cron: "23 10 * * *"
+    - cron: "47 10 * * *"
+    - cron: "17 11 * * *"
+    - cron: "47 11 * * *"
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: "올릴 게시물 번호 (비우면 대기열의 다음 편)"
+        required: false
+      force:
+        description: "오늘 이미 올렸어도 올리기"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency: instagram-post
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 오늘 이미 올렸는지 확인
+        id: guard
+        env:
+          FORCE: ${{ inputs.force }}
+        run: python3 guard.py >> "$GITHUB_OUTPUT"
+
+      - name: 게시할 편 고르기
+        if: steps.guard.outputs.skip != '1'
+        id: pick
+        run: |
+          if [ -n "${{ inputs.slug }}" ]; then echo "slug=$(printf '%03d' ${{ inputs.slug }})" >> "$GITHUB_OUTPUT";
+          else echo "slug=$(python3 publish.py next)" >> "$GITHUB_OUTPUT"; fi
+
+      - name: 대기열 비어 있음
+        if: steps.guard.outputs.skip != '1' && steps.pick.outputs.slug == ''
+        run: echo "::warning::게시할 편이 없어요. posts 폴더에 새 게시물을 추가해 주세요."
+
+      - name: 인스타그램 게시
+        if: steps.pick.outputs.slug != ''
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+        run: |
+          export MEDIA_BASE="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ github.sha }}"
+          python3 publish.py post ${{ steps.pick.outputs.slug }}
+          git config user.name "bamboo-forest-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add state.json
+          git commit -m "published ${{ steps.pick.outputs.slug }}"
+          git pull --rebase
+          git push
