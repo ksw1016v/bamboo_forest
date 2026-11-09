@@ -114,7 +114,29 @@ def wait_ready(cid, tries=40):
     raise SystemExit(f"컨테이너 {cid} 준비 시간 초과")
 
 
+def _publish_carousel(uid, base, images, caption):
+    if len(images) == 1:
+        cid = call("POST", f"{uid}/media", image_url=f"{base}/{images[0]}", caption=caption)["id"]
+        wait_ready(cid)
+    else:
+        kids = [call("POST", f"{uid}/media", image_url=f"{base}/{im}", is_carousel_item="true")["id"] for im in images]
+        for k in kids:
+            wait_ready(k)
+        cid = call("POST", f"{uid}/media", media_type="CAROUSEL", children=",".join(kids), caption=caption)["id"]
+        wait_ready(cid)
+    return call("POST", f"{uid}/media_publish", creation_id=cid)["id"]
+
+
+def _publish_reel(uid, base, p):
+    extra = {"cover_url": f"{base}/{p['cover']}"} if p.get("cover") else {"thumb_offset": "1000"}
+    cid = call("POST", f"{uid}/media", media_type="REELS", video_url=f"{base}/{p['video']}",
+               caption=p.get("reel_caption", p["caption"]), share_to_feed="true", **extra)["id"]
+    wait_ready(cid, tries=72)
+    return call("POST", f"{uid}/media_publish", creation_id=cid)["id"]
+
+
 def post(slug):
+    """type: carousel | image | reel | toon(피드 캐러셀 + 릴스 함께)"""
     p = json.loads((ROOT / "posts" / slug / "post.json").read_text(encoding="utf-8"))
     base = os.environ["MEDIA_BASE"].rstrip("/") + f"/posts/{slug}"
     kind = p["type"]
@@ -123,26 +145,18 @@ def post(slug):
         return
     uid = user_id()
     print("계정:", call("GET", uid, fields="username").get("username"))
-    if kind == "reel":
-        extra = {"cover_url": f"{base}/{p['cover']}"} if p.get("cover") else {"thumb_offset": "1000"}
-        cid = call("POST", f"{uid}/media", media_type="REELS", video_url=f"{base}/{p['video']}",
-                   caption=p["caption"], share_to_feed="true", **extra)["id"]
-        wait_ready(cid, tries=72)
-    elif kind == "image":
-        cid = call("POST", f"{uid}/media", image_url=f"{base}/{p['images'][0]}", caption=p["caption"])["id"]
-        wait_ready(cid)
-    else:
-        kids = [call("POST", f"{uid}/media", image_url=f"{base}/{im}", is_carousel_item="true")["id"] for im in p["images"]]
-        for k in kids:
-            wait_ready(k)
-        cid = call("POST", f"{uid}/media", media_type="CAROUSEL", children=",".join(kids), caption=p["caption"])["id"]
-        wait_ready(cid)
-    res = call("POST", f"{uid}/media_publish", creation_id=cid)
-    print("게시 완료 media id:", res["id"])
     st = load_state()
+    now = lambda: datetime.datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S")
+    if kind in ("carousel", "image", "toon"):
+        mid = _publish_carousel(uid, base, p["images"], p["caption"])
+        print("피드 게시 완료 media id:", mid)
+        st["log"].append({"slug": slug, "type": "feed", "media_id": mid, "at": now()})
+        save_state(st)
+    if kind in ("reel", "toon"):
+        mid = _publish_reel(uid, base, p)
+        print("릴스 게시 완료 media id:", mid)
+        st["log"].append({"slug": slug, "type": "reel", "media_id": mid, "at": now()})
     st["published"].append(slug)
-    st["log"].append({"slug": slug, "type": kind, "media_id": res["id"],
-                      "at": datetime.datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S")})
     save_state(st)
 
 
