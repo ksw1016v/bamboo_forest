@@ -17,6 +17,7 @@ posts/NNN/post.json
   python publish.py check         -> 토큰 연결 확인 (계정 이름 출력)
 """
 import datetime, json, os, pathlib, sys, time, urllib.error, urllib.parse, urllib.request
+import caption_check
 
 ROOT = pathlib.Path(__file__).parent
 STATE = ROOT / "state.json"
@@ -140,6 +141,7 @@ def post(slug):
     p = json.loads((ROOT / "posts" / slug / "post.json").read_text(encoding="utf-8"))
     base = os.environ["MEDIA_BASE"].rstrip("/") + f"/posts/{slug}"
     kind = p["type"]
+    caption_check.warn_only(ROOT / "posts" / slug / "post.json")  # 규칙 위반은 경고만, 게시는 계속
     if os.environ.get("DRY_RUN"):
         print("DRY RUN", slug, kind, base, p["caption"][:60])
         return
