@@ -10,8 +10,8 @@ KST = datetime.timezone(datetime.timedelta(hours=9))
 now = datetime.datetime.now(KST).replace(tzinfo=None)
 st = pathlib.Path(__file__).parent / "state.json"
 log = json.loads(st.read_text(encoding="utf-8")).get("log", []) if st.exists() else []
-manual = os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
-force = os.environ.get("FORCE") == "true"
+manual = os.environ.get("GITHUB_EVENT_NAME") in ("workflow_dispatch", "push")
+force = os.environ.get("FORCE") == "true" or os.environ.get("GITHUB_EVENT_NAME") == "push"
 skip = 0
 if not force and any(e["at"][:10] == now.date().isoformat() for e in log):
     skip = 1

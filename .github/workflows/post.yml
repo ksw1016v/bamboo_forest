@@ -9,6 +9,9 @@ on:
     - cron: "47 10 * * *"
     - cron: "17 11 * * *"
     - cron: "47 11 * * *"
+  push:
+    paths:
+      - ".github/post-now"   # 이 파일에 게시물 번호를 적어 푸시하면 바로 게시
   workflow_dispatch:
     inputs:
       slug:
@@ -41,12 +44,26 @@ jobs:
         if: steps.guard.outputs.skip != '1'
         id: pick
         run: |
-          if [ -n "${{ inputs.slug }}" ]; then echo "slug=$(printf '%03d' ${{ inputs.slug }})" >> "$GITHUB_OUTPUT";
+          if [ "${{ github.event_name }}" = "push" ]; then echo "slug=$(cat .github/post-now | tr -s ' \n' ' ' | sed 's/ *$//')" >> "$GITHUB_OUTPUT";
+          elif [ -n "${{ inputs.slug }}" ]; then echo "slug=$(printf '%03d' ${{ inputs.slug }})" >> "$GITHUB_OUTPUT";
           else echo "slug=$(python3 publish.py next)" >> "$GITHUB_OUTPUT"; fi
 
       - name: 대기열 비어 있음
         if: steps.guard.outputs.skip != '1' && steps.pick.outputs.slug == ''
         run: echo "::warning::게시할 편이 없어요. posts 폴더에 새 게시물을 추가해 주세요."
+
+      - name: 미디어 공개 주소 준비 (jsDelivr가 늦으면 GitHub 원본 주소)
+        if: steps.pick.outputs.slug != ''
+        run: |
+          check() { for f in $(ls posts/$SLUG | grep -v post.json); do ok=0; for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$1/posts/$SLUG/$f"); [ "$code" = "200" ] && { ok=1; break; }; sleep 5; done
+            echo "$f -> $code"; [ "$ok" = "1" ] || return 1; done; }
+          J="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ github.sha }}"
+          R="https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}"
+          okall() { for SLUG in ${{ steps.pick.outputs.slug }}; do check "$1" || return 1; done; }
+          if okall "$J"; then echo "MEDIA_BASE=$J" >> "$GITHUB_ENV"
+          elif okall "$R"; then echo "::warning::jsDelivr 대신 GitHub 원본 주소 사용"; echo "MEDIA_BASE=$R" >> "$GITHUB_ENV"
+          else echo "::error::미디어 공개 주소 준비 실패"; exit 1; fi
 
       - name: 인스타그램 게시
         if: steps.pick.outputs.slug != ''
@@ -54,8 +71,7 @@ jobs:
           IG_TOKEN: ${{ secrets.IG_TOKEN }}
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
         run: |
-          export MEDIA_BASE="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ github.sha }}"
-          python3 publish.py post ${{ steps.pick.outputs.slug }}
+          for s in ${{ steps.pick.outputs.slug }}; do python3 publish.py post $s; done
           git config user.name "bamboo-forest-bot"
           git config user.email "actions@users.noreply.github.com"
           git add state.json
