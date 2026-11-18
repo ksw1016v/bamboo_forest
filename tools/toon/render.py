@@ -76,7 +76,7 @@ def slides(e):
   <div style="display:flex;flex-direction:column;align-items:center;gap:12px">{bubble(c1,t1,"")}{ch(c1,290)}</div>
   <div style="display:flex;flex-direction:column;align-items:center;gap:12px">{bubble(c2,t2,"")}{ch(c2,300)}</div>
  </div>
- <div class="foot" style="width:100%;align-items:center"><span style="border:3px solid #1F4A0C;background:#FFE58A;padding:4px 16px;color:#1F4A0C;font-size:28px">대숲툰 {n}화</span><span class="red" style="font-size:28px">넘겨서 확인 →</span></div>
+ <div class="foot" style="width:100%;align-items:center"><span style="border:3px solid #1F4A0C;background:#FFE58A;padding:4px 16px;color:#1F4A0C;font-size:28px">대숲툰 {n}화</span><span class="red" style="font-size:28px">끝까지 보면 꿀팁 ▶</span></div>
 </div></div>''')
     tc, tt = e["s2_top"]; lc, lb, lcap = e["s2_left"]; rc, rb = e["s2_right"]; bc, bt = e["s2_boom"]
     s.append(f'''<div class="page">

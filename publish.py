@@ -137,7 +137,7 @@ def _publish_reel(uid, base, p):
 
 
 def post(slug):
-    """type: carousel | image | reel | toon(피드 캐러셀 + 릴스 함께)"""
+    """type: carousel | image | reel | toon(대숲툰: 릴스만 게시)"""
     p = json.loads((ROOT / "posts" / slug / "post.json").read_text(encoding="utf-8"))
     base = os.environ["MEDIA_BASE"].rstrip("/") + f"/posts/{slug}"
     kind = p["type"]
@@ -149,7 +149,8 @@ def post(slug):
     print("계정:", call("GET", uid, fields="username").get("username"))
     st = load_state()
     now = lambda: datetime.datetime.now(KST).strftime("%Y-%m-%d %H:%M:%S")
-    if kind in ("carousel", "image", "toon"):
+    # 대숲툰(toon)은 릴스만 게시 (2026-11-18부터). 피드 이미지는 릴스 영상 안에 들어 있음
+    if kind in ("carousel", "image"):
         mid = _publish_carousel(uid, base, p["images"], p["caption"])
         print("피드 게시 완료 media id:", mid)
         st["log"].append({"slug": slug, "type": "feed", "media_id": mid, "at": now()})

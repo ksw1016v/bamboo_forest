@@ -1,10 +1,10 @@
 # 대숲툰 제작 가이드
 
-설계사를 위한 대나무숲(@bamboo_forest_official)의 인스타툰. 월·수·금 19:00(KST)에 피드(캐러셀 6장) + 릴스가 함께 자동 게시된다.
+설계사를 위한 대나무숲(@bamboo_forest_official)의 인스타툰. 월·수·금 19:00(KST)에 **릴스만** 자동 게시된다(2026-11-18부터). 6장 이미지는 릴스 영상의 장면으로 쓰이고, 피드에는 릴스가 함께 노출된다.
 
 ## 만드는 법
 1. `toon/NN.json` 원고를 쓴다 (형식은 `toon/02.json`~`07.json` 참고, 모든 키 필수)
-2. `python3 tools/toon/render.py toon/NN.json` → `posts/<slug>/` 에 이미지 6장, 릴스, 커버, post.json 생성
+2. `python3 tools/toon/render.py toon/NN.json` → `posts/<slug>/` 에 장면 이미지 6장, 릴스, 커버, post.json 생성 (게시는 릴스만)
 3. `.toon_work/<slug>/01.png~06.png` 를 열어 눈으로 확인 (글자 넘침, 줄바꿈, 캐릭터 겹침)
 4. 커밋 후 푸시하면 `publish_after` 날짜의 19시에 자동 게시
 
